@@ -1,0 +1,47 @@
+# Generates a hot map from annotation xml files (may be generated with OpenLabeler),
+# i.e. a 2d numpy array that has a one if the corresponding pixel is part of an
+# annotated object with a given name.
+
+import numpy as np
+from lxml import etree
+
+def generate_label_target_from_xml(xml_path, label_name, dims):
+  """ 
+  :param: xml_path    __ path to xml file that contains the label information
+                         (for instance, created by OpenLabeler)
+  :param: label_name  __ name of the label for the hot-map
+  :param: dims        __ 2-tuple giving (Y,X) where Y is the vertical and
+                         X is the horizontal dimension
+  :return:   a 0-and-1-valued numpy array that is hot for every pixel covered
+             by a label with the given name.
+  """
+  root = etree.fromstring(open(xml_path,"rt").read())
+  src_width = float(root.find("size").find("width").text)
+  src_height = float(root.find("size").find("height").text)
+  dst_height = int( dims[0] )
+  dst_width = int( dims[1] )
+  hot_map = np.zeros((dst_height,dst_width),"float")
+  
+  xpath_objs = r'./object[./name[text()="{label_name}"]]'.format(
+                                                          label_name=label_name)
+  for label in root.xpath(xpath_objs):
+    for bounding_box in label.findall("bndbox"):
+      lo_x = max(0, min(src_width - 1, 
+                        int( float(bounding_box.find("xmin").text) 
+                              * dst_width / src_width + .2)))
+      hi_x = max(0, min(src_width - 1, 
+                        int( float(bounding_box.find("xmax").text)
+                              * dst_width / src_width + .2)))
+      lo_y = max(0, min(src_height - 1, 
+                        int( float(bounding_box.find("ymin").text)
+                              * dst_height / src_height + .8)))
+      hi_y = max(0, min(src_height - 1, 
+                        int( float(bounding_box.find("ymax").text)
+                              * dst_height / src_height + .8)))
+
+      if (lo_y >= hi_y) or (lo_x >= hi_x):
+        continue
+      hot_map[lo_y:hi_y, lo_x:hi_x] = 1.0
+
+
+return hot_map
