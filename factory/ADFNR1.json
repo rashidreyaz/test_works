@@ -1,0 +1,9 @@
+{
+	"name": "ADFNR1",
+	"location": "centralus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "12fceefb-b8c1-469f-9557-e7632256ea3c",
+		"tenantId": "daae0795-ca83-431d-abfb-85794dfa9032"
+	}
+}
